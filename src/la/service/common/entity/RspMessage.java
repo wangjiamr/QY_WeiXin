@@ -4,9 +4,9 @@ package la.service.common.entity;
  * Created by wangjia on 14-6-26.
  */
 public class RspMessage {
-    // 接收方帐号（收到的OpenID）
+    // 微信企业号
     private String ToUserName;
-    // 开发者微信号
+    // 员工 UserID
     private String FromUserName;
     // 消息创建时间 （整型）
     private long CreateTime;

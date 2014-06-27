@@ -6,11 +6,11 @@ package la.service.common.entity;
 public class Message {
 
     /**
-     * 开发者微信号
+     * 微信企业号
      */
     private String ToUserName;
     /**
-     * 发送方帐号(一个OpenID）
+     *员工 UserID
      */
     private String FromUserName;
     /**
@@ -18,7 +18,7 @@ public class Message {
      */
     private long CreateTime;
     /**
-     * 消息类型(text/image/location/link）
+     * 消息类型(text/image/location/link/video）
      */
     private String MsgType;
     /**
