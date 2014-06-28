@@ -1,15 +1,18 @@
 package la.service.common.action;
 
+import com.mingdao.api.entity.Req;
+import com.mingdao.api.la.RequestLA;
+import com.mingdao.api.utils.SignatureUtil;
+import com.sun.org.glassfish.external.statistics.annotations.Reset;
 import la.service.common.entity.*;
 import la.service.util.MessageUtils;
+import la.service.util.WxParamsUtils;
+import la.service.util.WxTokenUtils;
+import la.service.web.support.ActionSupport;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
-import org.apache.commons.lang.StringUtils;
-import org.guiceside.commons.collection.RequestData;
-import org.guiceside.web.action.BaseAction;
-import org.guiceside.web.annotation.Action;
-import org.guiceside.web.annotation.ReqGet;
-import org.guiceside.web.annotation.ReqSet;
+import org.guiceside.commons.lang.StringUtils;
+import org.guiceside.web.annotation.*;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -28,7 +31,7 @@ import java.util.*;
  * To change this template use File | Settings | File Templates.
  */
 @Action(name = "authorize", namespace = "/common")
-public class AuthorizeAction extends BaseAction {
+public class AuthorizeAction extends ActionSupport {
 
 
     @ReqGet
@@ -70,8 +73,14 @@ public class AuthorizeAction extends BaseAction {
     @ReqGet
     private String companyId;
 
-    @ReqGet
+    @ReqSet
     private String laToken;
+
+    @ReqSet
+    private String eventKey;
+
+    @ReqSet
+    private String userId;
 
 
     private static final String wxToken = "mingdaoWX";
@@ -96,18 +105,15 @@ public class AuthorizeAction extends BaseAction {
         return null;
     }
 
-    public String test() throws Exception {
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("Company", "mingdao");
-        jsonObject.put("Address", "Shanghai China");
-        writeJsonByAction(jsonObject.toString());
-        return null;
-    }
+    @PageFlow(result = {
+            @Result(name = "manage", path = "/wf/manage?laToken=${laToken}&eventKey=${eventKey}", type = Dispatcher.Redirect),
+            @Result(name = "task", path = "/wf/task?laToken=${laToken}&eventKey=${eventKey}", type = Dispatcher.Redirect),
+            @Result(name = "req", path = "/wf/req?laToken=${laToken}&eventKey=${eventKey}", type = Dispatcher.Redirect)
+    })
+    public String approve() throws Exception {
 
-    public void signature() throws Exception {
-        System.out.println("Invoke method-----12345------>" + getHttpServletRequest().getMethod());
         if (getHttpServletRequest().getMethod().toUpperCase().equals("GET")) {// 验证信息是否来之微信服务器
-            String signature = getHttpServletRequest().getParameter("signature");
+            String  signature= getHttpServletRequest().getParameter("signature");
             String timestamp = getHttpServletRequest().getParameter("timestamp");
             String nonce = getHttpServletRequest().getParameter("nonce");
             String echostr = getHttpServletRequest().getParameter("echostr");
@@ -133,71 +139,99 @@ public class AuthorizeAction extends BaseAction {
                 }
             }
         } else {
-            System.out.println("--------->POST Method");
+            System.out.print("-------------------POST Method--------------------");
             String respMessage = null;
             try {
-                String respContent = "请求处理异常，请稍候尝试！";
                 Map<String, String> requestMap = MessageUtils.parseXml(getHttpServletRequest());
-                String fromUserName = requestMap.get("FromUserName");// 发送方帐号（open_id）
-                String toUserName = requestMap.get("ToUserName"); // 公众帐号
-                String msgType = requestMap.get("MsgType"); // 消息类型
+                System.out.println(requestMap);
+                if (requestMap != null & !requestMap.isEmpty()) {
+                    userId = requestMap.get("FromUserName");
+                    System.out.println(userId);
+                    if (StringUtils.isNotEmpty(userId)) {
+                        WxParamsUtils.put(userId, requestMap);
+                        laToken = WxTokenUtils.get(userId);
+                        System.out.println("token-----value from map:"+laToken);
+                        if (StringUtils.isBlank(laToken)) {
+                            String timestamp = System.currentTimeMillis() + "";
+                            String nonce = (Math.random() * (999999 - 100000) + 1215) + "";
+                            String content = "mingdao";
+                            String  signature= SignatureUtil.getSignature(timestamp, nonce, content, CORP_ID, CORP_SECRET);
+                            System.out.println("signature:"+signature);
+                            laToken = RequestLA.getToken(signature, userId, timestamp, nonce, content, CORP_ID, CORP_SECRET);
+                        }
+                        System.out.println("token-------value from webService"+laToken);
+                        if (StringUtils.isNotBlank(laToken)) {
+                            System.out.println("token"+laToken);
+                            WxTokenUtils.put(userId, laToken);
+                            String msgType = requestMap.get("MsgType");
+                            System.out.println(msgType);
+                            if (msgType.equals(MessageUtils.REQ_MESSAGE_TYPE_TEXT)) { // 文本消息
+                            } else if (msgType.equals(MessageUtils.REQ_MESSAGE_TYPE_EVENT)) { // 事件推送
+                                String eventType = requestMap.get("Event"); // 事件类型
+                                if (eventType.equals(MessageUtils.EVENT_TYPE_SUBSCRIBE)) {// 订阅
+                                    TextRspMessage message = MessageUtils.buildRspMessage(requestMap, TextRspMessage.class);
+                                    message.setContent("谢谢您的关注！");
+                                    respMessage = MessageUtils.messageToXml(message);
+                                    writeJsonByAction(respMessage);
+                                } else if (eventType.equals(MessageUtils.EVENT_TYPE_CLICK)) { // 自定义菜单点击事件
+                                    eventKey = requestMap.get("EventKey");
+                                    System.out.println("aaaaaa"+eventKey);
+                                    System.out.println(eventKey.startsWith("APPLY_"));
+                                    if (StringUtils.isNotBlank(eventKey)) {
+                                        if (eventKey.startsWith("APPLY_")) {
+                                            System.out.println("req"+eventKey);
 
-                NewsRspMessage textMessage = new NewsRspMessage();
-                if (msgType.equals(MessageUtils.REQ_MESSAGE_TYPE_TEXT)) { // 文本消息
-                    textMessage = new NewsRspMessage();
-                    textMessage.setToUserName(fromUserName);
-                    textMessage.setFromUserName(toUserName);
-                    textMessage.setCreateTime(new Date().getTime());
-                    textMessage.setMsgType(MessageUtils.RESP_MESSAGE_TYPE_NEWS);
-                    textMessage.setFuncFlag(0);
-                    String content = requestMap.get("Content");
-                    List<Article> list = new ArrayList<Article>();
-                    for (int x = 0; x < Integer.parseInt(content); x++) {
-                        list.add(_news(false));
-                    }
-                    textMessage.setArticleCount(list.size());
-                    textMessage.setArticles(list);
-                } else if (msgType.equals(MessageUtils.REQ_MESSAGE_TYPE_IMAGE)) {// 图片消息
-                    respContent = "您发送的是图片消息！";
-                } else if (msgType.equals(MessageUtils.REQ_MESSAGE_TYPE_LOCATION)) { // 地理位置消息
-                    respContent = "您发送的是地理位置消息！";
-                } else if (msgType.equals(MessageUtils.REQ_MESSAGE_TYPE_LINK)) { // 链接消息
-                    respContent = "您发送的是链接消息！";
-                } else if (msgType.equals(MessageUtils.REQ_MESSAGE_TYPE_VOICE)) {// 音频消息
-                    respContent = "您发送的是音频消息！";
-                } else if (msgType.equals(MessageUtils.REQ_MESSAGE_TYPE_EVENT)) { // 事件推送
-                    String eventType = requestMap.get("Event"); // 事件类型
-                    if (eventType.equals(MessageUtils.EVENT_TYPE_SUBSCRIBE)) {// 订阅
-                        respContent = "谢谢您的关注！";
-                    } else if (eventType.equals(MessageUtils.EVENT_TYPE_UNSUBSCRIBE)) { // 取消订阅
-                        //
-                    } else if (eventType.equals(MessageUtils.EVENT_TYPE_CLICK)) { // 自定义菜单点击事件
-                        String key = requestMap.get("EventKey");
-                        if (StringUtils.isNotEmpty(key)) {
-                            if (key.equals("APPLY_EXECUTION")) {//申请-执行中
-                                respContent = "申请-执行中菜单";
-                            } else if (key.equals("APPLY_COMPLETED")) {//申请-已完成
-                                respContent = "申请-已完成菜单";
-                            } else if (key.equals("APPLY_NEW")) {//申请-新建
-                                respContent = "申请-新建菜单";
-                            } else if (key.equals("APPROVE_EXECUTION")) {//审批-进行中
-                                respContent = "审批-进行中菜单";
-                            } else if (key.equals("APPROVE_COMPLETED")) {//审批-已完成
-                                respContent = "审批-已完成菜单";
-                            } else if (key.equals("EXECUTION_WAITING")) {//执行-等待
-                                respContent = "执行等待";
-                            } else if (key.equals("EXECUTION_COMPLETED")) {//执行-完毕
-                                respContent = "执行完毕";
+                                            requestMap = WxParamsUtils.get(userId);
+                                            System.out.print("-------requestMap  from map ="+requestMap);
+                                            if (requestMap != null && !requestMap.isEmpty()) {
+                                                String content=null;
+                                                if (eventKey.equals("APPLY_EXECUTION")) {//申请-执行中
+                                                    System.out.println("-------进入到执行中if语句中 =");
+                                                    List<Req> reqList = RequestLA.reqIngList(laToken);
+                                                    System.out.println("-------进入到执行中if语句中获取集合 ="+reqList);
+                                                    if (reqList != null && !reqList.isEmpty()) {
+                                                        NewsRspMessage newsMessage = MessageUtils.buildRspMessage(requestMap, NewsRspMessage.class);
+                                                        List<Article> articles = _requestList(reqList);
+                                                        newsMessage.setArticleCount(articles.size());
+                                                        newsMessage.setArticles(articles);
+                                                        content = MessageUtils.messageToXml(newsMessage);
+                                                    }else{
+                                                        TextRspMessage textRspMessage = MessageUtils.buildRspMessage(requestMap, TextRspMessage.class);
+                                                        textRspMessage.setContent("未找到相关记录!");
+                                                        content = MessageUtils.messageToXml(textRspMessage);
+                                                    }
+                                                } else if (eventKey.equals("APPLY_COMPLETED")) {//申请-已完成
+
+                                                } else if (eventKey.equals("APPLY_NEW")) {//申请-新建
+
+                                                }
+                                                writeJsonByAction(content);
+                                            }
+                                            return null;
+                                        } else if (eventKey.startsWith("APPROVE_")) {
+                                            System.out.println("task"+eventKey);
+                                            return "task";
+                                        } else if (eventKey.startsWith("EXECUTION_")) {
+                                            System.out.println("manage"+eventKey);
+                                            return "manage";
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
                 }
-                respMessage = MessageUtils.newsMessageToXml(textMessage);
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            writeJsonByAction(respMessage);
         }
+        return null;
+    }
+
+
+    public void signature() throws Exception {
+        System.out.println("Invoke method-----12345------>" + getHttpServletRequest().getMethod());
 
 
     }
@@ -230,9 +264,9 @@ public class AuthorizeAction extends BaseAction {
 
     private String getUserInfo(String userId) throws Exception {
         String result = sendRequest(USER_INFO_URL + "?access_token=" + getToken() + "&userid=" + userId, null, false);
-        if(StringUtils.isNotEmpty(result)){
-            WeChatUserInfo userInfo=(WeChatUserInfo)JSONObject.toBean(JSONObject.fromObject(result),WeChatUserInfo.class);
-            if(userInfo!=null){
+        if (StringUtils.isNotEmpty(result)) {
+            WeChatUserInfo userInfo = (WeChatUserInfo) JSONObject.toBean(JSONObject.fromObject(result), WeChatUserInfo.class);
+            if (userInfo != null) {
                 return userInfo.toString();
             }
         }
@@ -248,10 +282,16 @@ public class AuthorizeAction extends BaseAction {
     }
 
     public static void main(String[] args) throws Exception {
-        String wangjiaUerId="68680cb7-9e50-4789-8baa-22656c3fad4a";
-        //String urlStr = url" https://api.weixin.qq.com/cgi-bin/menu/create?access_token=" + ACCESS_TOKEN;
+        String wangjiaUerId = "68680cb7-9e50-4789-8baa-22656c3fad4a";
+        String token = new AuthorizeAction().getToken();
+        String postMenu = "https://api.weixin.qq.com/cgi-bin/menu/create?access_token=" + token + "&agentid=3";
+        String getMenus = "https://qyapi.weixin.qq.com/cgi-bin/menu/get?access_token=" + token + "&agentid=3";
+        //System.out.print(urlStr);
+        //System.out.print(sendRequest(postMenu,_menus().toString(),true));
+        //System.out.print(sendRequest(getMenus,null,false));
+        System.out.print(token);
         //System.out.print(new AuthorizeAction().getToken());
-        System.out.print(new AuthorizeAction().getUserInfo(wangjiaUerId));
+        ///  System.out.print(new AuthorizeAction().getUserInfo(wangjiaUerId));
     }
 
     private static String sendRequest(String urlString, String params, boolean post) {
@@ -263,7 +303,6 @@ public class AuthorizeAction extends BaseAction {
         HttpURLConnection connection = null;
         StringBuilder result = new StringBuilder();
         try {
-
             url = new URL(urlString);
             connection = (HttpURLConnection) url.openConnection();
             connection.setDoInput(true);
@@ -287,7 +326,7 @@ public class AuthorizeAction extends BaseAction {
             reader.close();
             connection.disconnect();
         } catch (Exception e) {
-           e.printStackTrace();
+            e.printStackTrace();
         } finally {
             if (connection != null) connection.disconnect();
         }
@@ -359,5 +398,30 @@ public class AuthorizeAction extends BaseAction {
         menu.add(execute);
         root.put("button", menu);
         return root;
+    }
+
+
+    private List<Article> _requestList(List<Req> reqList) {
+        List<Article> articles = new ArrayList<Article>();
+        if (reqList != null && !reqList.isEmpty()) {
+            if (reqList.size() > 1) {
+                Article article = new Article();//图文混排
+                article.setTitle("查看更多");
+                article.setDescription("查看更多");
+                article.setPicUrl("http://y2.ifengimg.com/b4c1e3c5e4848389/2014/0627/rdn_53acb1b0d5924.jpg");
+                article.setUrl("http://www.baidu.com");
+                articles.add(article);
+            }
+            for (Req req : reqList) {
+                Article article = new Article();//图文混排
+                article.setTitle(req.getApplyName());
+                article.setDescription(req.getReqNo());
+                article.setPicUrl("http://y2.ifengimg.com/b4c1e3c5e4848389/2014/0627/rdn_53acb1b0d5924.jpg");
+                article.setUrl("http://www.baidu.com");
+                articles.add(article);
+            }
+        }
+
+        return articles;
     }
 }

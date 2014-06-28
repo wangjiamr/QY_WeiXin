@@ -13,6 +13,7 @@ import org.dom4j.io.SAXReader;
 import javax.servlet.http.HttpServletRequest;
 import java.io.InputStream;
 import java.io.Writer;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -140,6 +141,17 @@ public class MessageUtils {
         return xstream.toXML(newsRspMessage);
     }
 
+    public static <T> String messageToXml(T message) {
+        if (message.getClass().equals(TextRspMessage.class)) {
+            return textMessageToXml((TextRspMessage) message);
+        } else if (message.getClass().equals((NewsRspMessage.class))) {
+            return newsMessageToXml((NewsRspMessage) message);
+        } else if (message.getClass().equals(MusicRspMessage.class)) {
+            return musicMessageToXml((MusicRspMessage) message);
+        }
+        return null;
+    }
+
     /**
      * 扩展xstream，使其支持CDATA块
      *
@@ -168,4 +180,37 @@ public class MessageUtils {
             };
         }
     });
+
+    public static <T> T buildRspMessage(Map<String, String> requestMap, Class<? extends RspMessage> clazz) throws Exception {
+        T obj = null;
+        if (requestMap != null && clazz != null&& !requestMap.isEmpty()) {
+            String fromUserName = requestMap.get("FromUserName");// 发送方帐号（open_id）
+            String toUserName = requestMap.get("ToUserName"); // 公众帐号
+            RspMessage message = clazz.newInstance();
+            message.setToUserName(fromUserName);
+            message.setFromUserName(toUserName);
+            message.setCreateTime(new Date().getTime());
+            message.setMsgType(messageType(clazz));
+            message.setFuncFlag(0);
+            obj = (T) message;
+        }
+        return obj;
+    }
+
+    private static String messageType(Class<? extends RspMessage> clazz) {
+        if (clazz == null || clazz.equals(TextRspMessage.class)) {
+            return REQ_MESSAGE_TYPE_TEXT;
+        } else if (clazz.equals(NewsRspMessage.class)) {
+            return RESP_MESSAGE_TYPE_NEWS;
+        }
+        return null;
+    }
+
+    public static void main(String[] args) throws Exception {
+        Map<String, String> requestMap = new HashMap<String, String>();
+        requestMap.put("FromUserName", "mingdao");
+        requestMap.put("ToUserName", "wangjia");
+        NewsRspMessage message = buildRspMessage(requestMap, NewsRspMessage.class);
+        System.out.print(message);
+    }
 }
