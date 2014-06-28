@@ -36,6 +36,10 @@
         <filter-name>guiceSideSessionInView</filter-name>
         <url-pattern>/common/*</url-pattern>
     </filter-mapping>
+    <filter-mapping>
+        <filter-name>guiceSideSessionInView</filter-name>
+        <url-pattern>/wf/*</url-pattern>
+    </filter-mapping>
 
 
     <filter>
@@ -46,6 +50,10 @@
     <filter-mapping>
         <filter-name>guiceSideDispatcher</filter-name>
         <url-pattern>/common/*</url-pattern>
+    </filter-mapping>
+    <filter-mapping>
+        <filter-name>guiceSideDispatcher</filter-name>
+        <url-pattern>/wf/*</url-pattern>
     </filter-mapping>
 
 
