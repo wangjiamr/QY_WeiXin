@@ -12,7 +12,7 @@
         <property name="connection.driver_class">com.mysql.jdbc.Driver</property>
         <!-- 连接数据库的URL jdbc:mysql://10.168.8.162:3306/meta -->
         <property name="connection.url">
-            jdbc:mysql://la.mingdao.com:3306/approve
+            jdbc:mysql://127.0.0.1:3306/approve
         </property>
         <property name="connection.useUnicode">true</property>
         <property name="connection.characterEncoding">UTF-8</property>
@@ -21,7 +21,7 @@
         <property name="connection.username">root</property>
 
         <!--登录密码-->
-        <property name="connection.password">approval</property>
+        <property name="connection.password">123123</property>
 
 
         <!-- C3P0连接池设定-->
