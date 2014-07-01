@@ -58,7 +58,7 @@ public class WfTaskAction extends ActionSupport {
                 content = MessageUtils.messageToXml(textRspMessage);
             }
         }
-        writeJsonByAction(content);
+        writeXmlByAction(content);
         return null;
     }
 
