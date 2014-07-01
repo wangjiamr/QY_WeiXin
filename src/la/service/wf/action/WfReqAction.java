@@ -1,22 +1,18 @@
 package la.service.wf.action;
 
+import com.mingdao.api.entity.Page;
 import com.mingdao.api.entity.Req;
 import com.mingdao.api.la.RequestLA;
-import la.service.common.entity.Article;
-import la.service.common.entity.NewsRspMessage;
-import la.service.common.entity.RspMessage;
 import la.service.common.entity.TextRspMessage;
 import la.service.util.MessageUtils;
 import la.service.util.WxParamsUtils;
+import org.guiceside.commons.lang.DateFormatUtil;
 import org.guiceside.commons.lang.StringUtils;
 import org.guiceside.web.action.BaseAction;
 import org.guiceside.web.annotation.Action;
 import org.guiceside.web.annotation.ReqGet;
-import org.guiceside.web.annotation.ReqSet;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -42,77 +38,92 @@ public class WfReqAction extends BaseAction {
     @Override
     public String execute() throws Exception {
         String content = null;
-        System.out.println("-------WfReqAction userId="+userId);
-        System.out.println("-------WfReqAction laToken="+laToken);
-        System.out.println("-------WfReqAction eventKey="+eventKey);
         if (StringUtils.isNotBlank(eventKey) && StringUtils.isNotBlank(userId) && StringUtils.isNotBlank(laToken)) {
             requestMap = WxParamsUtils.get(userId);
-            System.out.print("-------requestMap  from map ="+requestMap);
             if (requestMap != null && !requestMap.isEmpty()) {
-                if (eventKey.equals("APPLY_EXECUTION")) {//申请-执行中
-                    System.out.println("-------进入到执行中if语句中 =");
-                    List<Req> reqList = RequestLA.reqIngList(laToken);
-                    System.out.println("-------进入到执行中if语句中获取集合 ="+reqList);
-                    if (reqList != null && !reqList.isEmpty()) {
-                        NewsRspMessage newsMessage = MessageUtils.buildRspMessage(requestMap, NewsRspMessage.class);
-                        List<Article> articles = _requestList(reqList);
-                        newsMessage.setArticleCount(articles.size());
-                        newsMessage.setArticles(articles);
-                        content = MessageUtils.messageToXml(newsMessage);
-                    }else{
-                        TextRspMessage textRspMessage = MessageUtils.buildRspMessage(requestMap, TextRspMessage.class);
-                        textRspMessage.setContent("未找到相关记录!");
-                        content = MessageUtils.messageToXml(textRspMessage);
-                    }
-                } else if (eventKey.equals("APPLY_COMPLETED")) {//申请-已完成
-
-                } else if (eventKey.equals("APPLY_NEW")) {//申请-新建
-
+                Page<Req> page = null;
+                String defaultMsg = "未找到相关记录!";
+                if (eventKey.equals("REQ_ING")) {//申请-进行中
+                    page = RequestLA.reqIngList(laToken, 5);
+                    defaultMsg = "我的申请-进行中:未找到相关记录!";
+                } else if (eventKey.equals("REQ_HISTORY")) {//申请-已完成
+                    page = RequestLA.reqHistoryList(laToken, 5);
+                    defaultMsg = "我的申请-已完成:未找到相关记录!";
+                } else if (eventKey.equals("REQ_CONFIRM")) {//申请-待确认
+                    page = RequestLA.reqConfirmList(laToken, 5);
+                    defaultMsg = "我的申请-待确认:未找到相关记录!";
+                } else if (eventKey.equals("SEND_REQ")) {//申请-新建
+                    defaultMsg = "<a href=\"http://itunes.apple.com/cn/app/ming-dao/id468630782?mt=8\">请先下载明道App!</a>";
                 }
+
+                TextRspMessage textRspMessage = MessageUtils.buildRspMessage(requestMap, TextRspMessage.class);
+                if (page != null) {
+                    String str = buildList(page,defaultMsg);
+                    textRspMessage.setContent(str);
+                } else {
+                    textRspMessage.setContent(defaultMsg);
+                }
+                content = MessageUtils.messageToXml(textRspMessage);
             }
         }
-        /*TextRspMessage message = MessageUtils.buildRspMessage(requestMap, TextRspMessage.class);
-        String respContent = "";
-        if (eventKey.equals("APPLY_EXECUTION")) {//申请-执行中
-            respContent = "申请-执行中菜单";
-        } else if (eventKey.equals("APPLY_COMPLETED")) {//申请-已完成
-            respContent = "申请-已完成菜单";
-        } else if (eventKey.equals("APPLY_NEW")) {//申请-新建
-            respContent = "申请-新建菜单";
-        } else if (eventKey.equals("APPROVE_EXECUTION")) {//审批-进行中
-            respContent = "审批-进行中菜单";
-        } else if (eventKey.equals("APPROVE_COMPLETED")) {//审批-已完成
-            respContent = "审批-已完成菜单";
-        } else if (eventKey.equals("EXECUTION_WAITING")) {//执行-等待
-            respContent = "执行等待";
-        } else if (eventKey.equals("EXECUTION_COMPLETED")) {//执行-完毕
-            respContent = "执行完毕";
-        }*/
         writeJsonByAction(content);
         return null;
     }
 
-    private List<Article> _requestList(List<Req> reqList) {
-        List<Article> articles = new ArrayList<Article>();
-        if (reqList != null && !reqList.isEmpty()) {
-            if (reqList.size() > 1) {
-                Article article = new Article();//图文混排
-                article.setTitle("查看更多");
-                article.setDescription("查看更多");
-                article.setPicUrl("http://y2.ifengimg.com/b4c1e3c5e4848389/2014/0627/rdn_53acb1b0d5924.jpg");
-                article.setUrl("http://www.baidu.com");
-                articles.add(article);
-            }
-            for (Req req : reqList) {
-                Article article = new Article();//图文混排
-                article.setTitle(req.getApplyName());
-                article.setDescription(req.getReqNo());
-                article.setPicUrl("http://y2.ifengimg.com/b4c1e3c5e4848389/2014/0627/rdn_53acb1b0d5924.jpg");
-                article.setUrl("http://www.baidu.com");
-                articles.add(article);
+    private String buildList(Page<Req> page, String defaultStr) {
+        if (page != null) {
+            List<Req> reqList = page.getResultList();
+            if (reqList != null && !reqList.isEmpty()) {
+                StringBuffer buffer = new StringBuffer();
+                buffer.append("您当前有").append("10").append("未处理\n\n");
+                String blank = padding(12);
+                for (int x = 0; x < reqList.size(); x++) {
+                    Req req = reqList.get(x);
+                    String dateStr = "";
+                    if (StringUtils.isNotBlank(req.getSendDate())) {
+                        Date sendDate = DateFormatUtil.parse(req.getSendDate(), DateFormatUtil.YEAR_MONTH_DAY_PATTERN);
+                        dateStr = DateFormatUtil.format(sendDate, "yyyy/MM/dd");
+                    }
+                    buffer.append("我发起的");
+                    buffer.append(req.getApplyName()+"\n");
+                    buffer.append(dateStr);
+                    buffer.append(blank);
+                    buffer.append(" <a href=\"http://www.baidu.com?x="+x+"\">查看</a>\n");
+                    if (x + 1 != reqList.size()) {
+                        buffer.append(splitLine(dateStr));
+                    }
+                    buffer.append("\n");
+
+                }
+                if (page.isHasNextPage()) {
+                    buffer.append("<a href=\"www.baidu.com?more\">查看更多</a>");
+                }
+                return buffer.toString();
             }
         }
+        if (StringUtils.isNotBlank(defaultStr)) {
+            return defaultStr;
+        }
+        return "没有找到数据!";
+    }
 
-        return articles;
+    private String padding(int length) {
+        if (length < -1) return "";
+        StringBuilder blank = new StringBuilder();
+        for (int x = 0; x < length; x++) {
+            blank.append(" ");
+        }
+        return blank.toString();
+    }
+
+    private String splitLine(String str) {
+        if (StringUtils.isNotBlank(str)) {
+            StringBuilder sb = new StringBuilder();
+            for (char b : str.toCharArray()) {
+                sb.append("-");
+            }
+            return sb.toString();
+        }
+        return "";
     }
 }

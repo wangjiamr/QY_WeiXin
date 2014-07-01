@@ -65,7 +65,7 @@
         </view>
         <packages>
             <value>la.service.common.action</value>
-            <!--<value>la.service.wf.action</value>-->
+            <value>la.service.wf.action</value>
         </packages>
         <interceptor>
             <module>
