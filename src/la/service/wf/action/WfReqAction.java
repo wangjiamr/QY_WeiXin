@@ -45,20 +45,20 @@ public class WfReqAction extends BaseAction {
                 String defaultMsg = "未找到相关记录!";
                 if (eventKey.equals("REQ_ING")) {//申请-进行中
                     page = RequestLA.reqIngList(laToken, 5);
-                    defaultMsg = "我的申请-进行中:未找到相关记录!";
+                    // defaultMsg = "我的申请-进行中:未找到相关记录!";
                 } else if (eventKey.equals("REQ_HISTORY")) {//申请-已完成
                     page = RequestLA.reqHistoryList(laToken, 5);
-                    defaultMsg = "我的申请-已完成:未找到相关记录!";
+                    // defaultMsg = "我的申请-已完成:未找到相关记录!";
                 } else if (eventKey.equals("REQ_CONFIRM")) {//申请-待确认
                     page = RequestLA.reqConfirmList(laToken, 5);
-                    defaultMsg = "我的申请-待确认:未找到相关记录!";
+                    //defaultMsg = "我的申请-待确认:未找到相关记录!";
                 } else if (eventKey.equals("SEND_REQ")) {//申请-新建
-                    defaultMsg = "<a href=\"http://itunes.apple.com/cn/app/ming-dao/id468630782?mt=8\">请先下载明道App!</a>";
+                    //defaultMsg = "<a href=\"http://itunes.apple.com/cn/app/ming-dao/id468630782?mt=8\">请先下载明道App!</a>";
                 }
 
                 TextRspMessage textRspMessage = MessageUtils.buildRspMessage(requestMap, TextRspMessage.class);
                 if (page != null) {
-                    String str = buildList(page,defaultMsg);
+                    String str = buildList(page, defaultMsg);
                     textRspMessage.setContent(str);
                 } else {
                     textRspMessage.setContent(defaultMsg);
@@ -68,6 +68,21 @@ public class WfReqAction extends BaseAction {
         }
         writeJsonByAction(content);
         return null;
+    }
+
+    private String buildApplyContent(Page<Req> page) {
+        if (page != null) {
+            List<Req> reqList = page.getResultList();
+            if (reqList != null && !reqList.isEmpty()) {
+                StringBuffer buffer = new StringBuffer();
+                buffer.append("您当前有").append("10").append("未处理\n\n");
+                String blank = padding(12);
+                for (int x = 0; x < reqList.size(); x++) {
+
+                }
+            }
+        }
+        return "没有找到数据!";
     }
 
     private String buildList(Page<Req> page, String defaultStr) {
@@ -85,10 +100,10 @@ public class WfReqAction extends BaseAction {
                         dateStr = DateFormatUtil.format(sendDate, "yyyy/MM/dd");
                     }
                     buffer.append("我发起的");
-                    buffer.append(req.getApplyName()+"\n");
+                    buffer.append(req.getApplyName() + "\n");
                     buffer.append(dateStr);
                     buffer.append(blank);
-                    buffer.append(" <a href=\"http://www.baidu.com?x="+x+"\">查看</a>\n");
+                    buffer.append(" <a href=\"http://www.baidu.com?x=" + x + "\">查看</a>\n");
                     if (x + 1 != reqList.size()) {
                         buffer.append(splitLine(dateStr));
                     }

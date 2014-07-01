@@ -87,6 +87,9 @@ public class AuthorizeAction extends ActionSupport {
     private String userId;
 
 
+    private static final String AGENT_ID="4";
+
+
     private static final String wxToken = "mingdaoWX";
 
     private static final String USER_INFO_URL = "https://qyapi.weixin.qq.com/cgi-bin/user/get";
@@ -97,6 +100,7 @@ public class AuthorizeAction extends ActionSupport {
 
     private static final String CORP_SECRET = "17ab4955fe78a806a1a778c7adbd93d8";
 
+    private static final String PUSH_MESSAGE_URL="https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token=";
 
     @Override
     public String execute() throws Exception {
@@ -135,7 +139,7 @@ public class AuthorizeAction extends ActionSupport {
                     ex.printStackTrace();
                 }
                 if (outStr.equals(signature)) {
-                    writeJsonByAction(echostr);
+                    writeTextByAction(echostr);
                 }
             }
         } else {
@@ -183,7 +187,7 @@ public class AuthorizeAction extends ActionSupport {
                             }
                         }
                         respMessage = MessageUtils.messageToXml(textRspMessage);
-                        writeJsonByAction(respMessage);
+                        writeXmlByAction(respMessage);
                     }
                 }
             }
@@ -228,7 +232,7 @@ public class AuthorizeAction extends ActionSupport {
         return null;
     }
 
-    private String getToken() {
+    private static String getToken() {
         String result = sendRequest(TOKEN_URL + "?corpid=" + CORP_ID + "&corpsecret=" + CORP_SECRET, null, false);
         if (StringUtils.isNotEmpty(result)) {
             return JSONObject.fromObject(result).get("access_token").toString();
@@ -237,16 +241,17 @@ public class AuthorizeAction extends ActionSupport {
     }
 
     public static void main(String[] args) throws Exception {
-        String wangjiaUerId = "68680cb7-9e50-4789-8baa-22656c3fad4a";
-        String token = new AuthorizeAction().getToken();
+        String wangjiaUerId = "31f1baba-dce1-4c5b-8579-115dc0c65b57";
+        String token = getToken();
         String postMenu = "https://api.weixin.qq.com/cgi-bin/menu/create?access_token=" + token + "&agentid=3";
         String getMenus = "https://qyapi.weixin.qq.com/cgi-bin/menu/get?access_token=" + token + "&agentid=3";
         //System.out.print(urlStr);
         //System.out.print(sendRequest(postMenu,_menus().toString(),true));
         //System.out.print(sendRequest(getMenus,null,false));
-        System.out.print(token);
+       // System.out.print(token);
         //System.out.print(new AuthorizeAction().getToken());
         ///  System.out.print(new AuthorizeAction().getUserInfo(wangjiaUerId));
+        System.out.println(pushMessage("<a href=\"http://www.baidu.com\">您收到一条新的申请,请查收!</a>",wangjiaUerId));
     }
 
     private static String sendRequest(String urlString, String params, boolean post) {
@@ -395,5 +400,15 @@ public class AuthorizeAction extends ActionSupport {
                 TimeStampLaTokenUtils.put(laToken, laTokenObj.getTimeStamp());
             }
         }
+    }
+
+        private static String pushMessage(String content,String userId){
+        PushMessage message=new PushMessage(content);
+        message.setTouser(userId.replace(",","|"));
+        message.setMsgtype("text");
+        message.setAgentid(AGENT_ID);
+        message.setSafe("1");
+        message.setToparty(null);
+        return  sendRequest(PUSH_MESSAGE_URL+getToken(),JSONObject.fromObject(message).toString(),true);
     }
 }
