@@ -10,8 +10,7 @@ import la.service.web.support.ActionSupport;
 import org.guiceside.commons.lang.DateFormatUtil;
 import org.guiceside.commons.lang.StringUtils;
 import org.guiceside.web.action.BaseAction;
-import org.guiceside.web.annotation.Action;
-import org.guiceside.web.annotation.ReqGet;
+import org.guiceside.web.annotation.*;
 
 import java.util.*;
 
@@ -26,6 +25,7 @@ import java.util.*;
 public class WfReqAction extends ActionSupport {
 
     @ReqGet
+    @ReqSet
     private String laToken;
 
     @ReqGet
@@ -60,7 +60,7 @@ public class WfReqAction extends ActionSupport {
 
                 TextRspMessage textRspMessage = MessageUtils.buildRspMessage(requestMap, TextRspMessage.class);
                 if (page != null) {
-                    String str = buildMessageContent(page, title, eventKey,true,laToken);
+                    String str = buildMessageContent(page, title, eventKey, true, laToken);
                     textRspMessage.setContent(str);
                 } else {
                     textRspMessage.setContent(defaultMsg);
@@ -70,5 +70,13 @@ public class WfReqAction extends ActionSupport {
         }
         writeJsonByAction(content);
         return null;
+    }
+
+    @PageFlow(result = {
+            @Result(name = "success", path = "/view/req/list.ftl", type = Dispatcher.FreeMarker)
+    })
+    public String ing() throws Exception {
+        RequestLA.reqHistoryList(laToken,15);
+        return "success";
     }
 }

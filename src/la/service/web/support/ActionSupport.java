@@ -23,7 +23,7 @@ public abstract class ActionSupport extends BaseAction {
             String detailURL = null;
             String moreUrl = null;
             if (type.contains("REQ")) {
-                detailURL = "http://qywx.mingdao.com/wf/req/view?laToken=" + laToken + "&id=";
+                detailURL = "http://qywx.mingdao.com/wf/req/ing?laToken=" + laToken + "&id=";
             } else if (type.contains("TASK")) {
                 detailURL = "http://qywx.mingdao.com/wf/task/view?laToken=" + laToken + "&id=";
             } else if (type.contains("MANAGE")) {
