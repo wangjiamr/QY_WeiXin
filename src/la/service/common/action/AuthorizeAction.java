@@ -87,7 +87,7 @@ public class AuthorizeAction extends ActionSupport {
     private String userId;
 
 
-    private static final String AGENT_ID="4";
+    private static final String AGENT_ID = "4";
 
 
     private static final String wxToken = "mingdaoWX";
@@ -100,7 +100,7 @@ public class AuthorizeAction extends ActionSupport {
 
     private static final String CORP_SECRET = "17ab4955fe78a806a1a778c7adbd93d8";
 
-    private static final String PUSH_MESSAGE_URL="https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token=";
+    private static final String PUSH_MESSAGE_URL = "https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token=";
 
     @Override
     public String execute() throws Exception {
@@ -161,6 +161,11 @@ public class AuthorizeAction extends ActionSupport {
                         }
                         if (diffHours.intValue() > 2) {
                             getLAToken();
+                        } else {
+                            boolean validate_flag = RequestLA.validateToken(laToken);
+                            if (!validate_flag) {
+                                getLAToken();
+                            }
                         }
                     }
                     if (StringUtils.isNotBlank(laToken)) {
@@ -221,16 +226,6 @@ public class AuthorizeAction extends ActionSupport {
         return article;
     }
 
-    private String getUserInfo(String userId) throws Exception {
-        String result = sendRequest(USER_INFO_URL + "?access_token=" + getToken() + "&userid=" + userId, null, false);
-        if (StringUtils.isNotEmpty(result)) {
-            WeChatUserInfo userInfo = (WeChatUserInfo) JSONObject.toBean(JSONObject.fromObject(result), WeChatUserInfo.class);
-            if (userInfo != null) {
-                return userInfo.toString();
-            }
-        }
-        return null;
-    }
 
     private static String getToken() {
         String result = sendRequest(TOKEN_URL + "?corpid=" + CORP_ID + "&corpsecret=" + CORP_SECRET, null, false);
@@ -240,19 +235,6 @@ public class AuthorizeAction extends ActionSupport {
         return null;
     }
 
-    public static void main(String[] args) throws Exception {
-        String wangjiaUerId = "31f1baba-dce1-4c5b-8579-115dc0c65b57";
-        String token = getToken();
-        String postMenu = "https://api.weixin.qq.com/cgi-bin/menu/create?access_token=" + token + "&agentid=3";
-        String getMenus = "https://qyapi.weixin.qq.com/cgi-bin/menu/get?access_token=" + token + "&agentid=3";
-        //System.out.print(urlStr);
-        //System.out.print(sendRequest(postMenu,_menus().toString(),true));
-        //System.out.print(sendRequest(getMenus,null,false));
-       // System.out.print(token);
-        //System.out.print(new AuthorizeAction().getToken());
-        ///  System.out.print(new AuthorizeAction().getUserInfo(wangjiaUerId));
-        System.out.println(pushMessage("<a href=\"http://www.baidu.com\">您收到一条新的申请,请查收!</a>",wangjiaUerId));
-    }
 
     private static String sendRequest(String urlString, String params, boolean post) {
         String postType = "GET";
@@ -293,98 +275,6 @@ public class AuthorizeAction extends ActionSupport {
         return result.toString();
     }
 
-    private static JSONObject _menus() {
-        JSONObject root = new JSONObject();
-        JSONArray menu = new JSONArray();
-        JSONObject apply = new JSONObject();
-        apply.put("name", "申请");
-        JSONObject approve = new JSONObject();
-        approve.put("name", "审批");
-        JSONObject execute = new JSONObject();
-        execute.put("name", "执行");
-        JSONObject apply_execution = new JSONObject();
-        JSONObject apply_complete = new JSONObject();
-        JSONObject apply_new = new JSONObject();
-        JSONObject approve_execution = new JSONObject();
-        JSONObject approve_complete = new JSONObject();
-        JSONObject execute_waiting = new JSONObject();
-        JSONObject execute_complete = new JSONObject();
-        JSONArray apply_sub_buttons = new JSONArray();
-        JSONArray approve_sub_buttons = new JSONArray();
-        JSONArray execute_sub_buttons = new JSONArray();
-
-        apply_execution.put("name", "进行中");
-        apply_execution.put("type", "click");
-        apply_execution.put("key", "APPLY_EXECUTION");
-
-        apply_complete.put("name", "已完成");
-        apply_complete.put("type", "click");
-        apply_complete.put("key", "APPLY_COMPLETED");
-
-        apply_new.put("name", "新建");
-        apply_new.put("type", "click");
-        apply_new.put("key", "APPLY_NEW");
-
-
-        approve_execution.put("name", "进行中");
-        approve_execution.put("type", "click");
-        approve_execution.put("key", "APPROVE_EXECUTION");
-
-        approve_complete.put("name", "已完成");
-        approve_complete.put("type", "click");
-        approve_complete.put("key", "APPROVE_COMPLETED");
-
-        execute_waiting.put("name", "等待执行");
-        execute_waiting.put("type", "click");
-        execute_waiting.put("key", "EXECUTION_WAITING");
-
-        execute_complete.put("name", "执行完毕");
-        execute_complete.put("type", "click");
-        execute_complete.put("key", "EXECUTION_COMPLETED");
-
-        apply_sub_buttons.add(apply_new);
-        apply_sub_buttons.add(apply_execution);
-        apply_sub_buttons.add(apply_complete);
-        approve_sub_buttons.add(approve_execution);
-        approve_sub_buttons.add(approve_complete);
-        execute_sub_buttons.add(execute_waiting);
-        execute_sub_buttons.add(execute_complete);
-
-        apply.put("sub_button", apply_sub_buttons);
-        approve.put("sub_button", approve_sub_buttons);
-        execute.put("sub_button", execute_sub_buttons);
-        menu.add(apply);
-        menu.add(approve);
-        menu.add(execute);
-        root.put("button", menu);
-        return root;
-    }
-
-
-    private List<Article> _requestList(List<Req> reqList) {
-        List<Article> articles = new ArrayList<Article>();
-        if (reqList != null && !reqList.isEmpty()) {
-            if (reqList.size() > 1) {
-                Article article = new Article();//图文混排
-                article.setTitle("查看更多");
-                article.setDescription("查看更多");
-                article.setPicUrl("http://y2.ifengimg.com/b4c1e3c5e4848389/2014/0627/rdn_53acb1b0d5924.jpg");
-                article.setUrl("http://www.baidu.com");
-                articles.add(article);
-            }
-            for (Req req : reqList) {
-                Article article = new Article();//图文混排
-                article.setTitle(req.getApplyName());
-                article.setDescription(req.getReqNo());
-                article.setPicUrl("http://y2.ifengimg.com/b4c1e3c5e4848389/2014/0627/rdn_53acb1b0d5924.jpg");
-                article.setUrl("http://www.baidu.com");
-                articles.add(article);
-            }
-        }
-
-        return articles;
-    }
-
 
     private void getLAToken() throws Exception {
         LAToken laTokenObj = null;
@@ -402,13 +292,13 @@ public class AuthorizeAction extends ActionSupport {
         }
     }
 
-        private static String pushMessage(String content,String userId){
-        PushMessage message=new PushMessage(content);
-        message.setTouser(userId.replace(",","|"));
+    private static String pushMessage(String content, String userId) {
+        PushMessage message = new PushMessage(content);
+        message.setTouser(userId.replace(",", "|"));
         message.setMsgtype("text");
         message.setAgentid(AGENT_ID);
         message.setSafe("1");
         message.setToparty(null);
-        return  sendRequest(PUSH_MESSAGE_URL+getToken(),JSONObject.fromObject(message).toString(),true);
+        return sendRequest(PUSH_MESSAGE_URL + getToken(), JSONObject.fromObject(message).toString(), true);
     }
 }
