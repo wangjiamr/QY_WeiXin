@@ -18,7 +18,7 @@ import java.util.List;
 
 
 public abstract class ActionSupport extends BaseAction {
-    protected String buildMessageContent(Page<Req> page, String title, String type, boolean isSendDate, String laToken) throws Exception {
+    protected String buildMessageContent(Page<Req> page, String title, String type, String reqType, String laToken) throws Exception {
         if (page != null) {
             String detailURL = null;
             String moreUrl = null;
@@ -46,10 +46,10 @@ public abstract class ActionSupport extends BaseAction {
             }
             List<Req> reqList = page.getResultList();
             if (reqList != null && !reqList.isEmpty()) {
-                StringBuilder buffer = new StringBuilder("您当前有10条" + title + "\n\n");
+                StringBuilder buffer = new StringBuilder("您当前有"+page.getTotalRecord()+"条" + title + "\n\n");
                 for (int x = 0; x < reqList.size(); x++) {
                     Req req = reqList.get(x);
-                    String dateStr = isSendDate ? req.getSendDate() : req.getReceiveDate();
+                    String dateStr = reqType.equals("REQ") ? req.getSendDate() : req.getReceiveDate();
                     String userName = StringUtils.isBlank(req.getUserName()) ? "" : req.getUserName();
                     String applyName = StringUtils.isBlank(req.getApplyName()) ? "" : req.getApplyName();
                     if (StringUtils.isNotBlank(dateStr)) {
@@ -57,10 +57,16 @@ public abstract class ActionSupport extends BaseAction {
                         dateStr = DateFormatUtil.format(sendDate, "yyyy/MM/dd");
                         buffer.append(dateStr);
                         buffer.append(padding(11, " "));
-                        buffer.append("<a href=\"" + detailURL + req.getId() + "\">查看</a>");
+                        if (reqType.equals("REQ")) {
+                            buffer.append("<a href=\"" + detailURL + req.getId() + "\">查看</a>");
+                        }else if (reqType.equals("TASK")){
+                            buffer.append("<a href=\"" + detailURL + req.getTaskId() +"&reqId="+req.getId()+ "\">查看</a>");
+                        }else if (reqType.equals("MANAGE")){
+                            buffer.append("<a href=\"" + detailURL + req.getManageId() +"&reqId="+req.getId()+ "\">查看</a>");
+                        }
                         buffer.append("\n");
                     }
-                    if (isSendDate) {
+                    if (reqType.equals("REQ")) {
                         buffer.append(" ");
                         buffer.append(applyName + "\n");
                     } else {
@@ -91,6 +97,44 @@ public abstract class ActionSupport extends BaseAction {
             blank.append(paddingStr);
         }
         return blank.toString();
+    }
+
+    protected String get(Object entity, String property) {
+        Object result = null;
+        if (entity != null) {
+            try {
+                result = BeanUtils.getValue(entity, property);
+            } catch (OgnlException e) {
+                result = null;
+            }
+        }
+        return StringUtils.defaultIfEmpty(result);
+    }
+
+    protected String getDate(Object entity, String property, String f) {
+        Object result = null;
+        if (entity != null) {
+            try {
+                result = BeanUtils.getValue(entity, property);
+            } catch (OgnlException e) {
+                result = null;
+            }
+        }
+        return StringUtils.defaultIfEmptyByDate((Date) result, f);
+    }
+
+    protected <T> T get(Object entity, String property, Class<T> type) {
+        Object result = null;
+        if (entity != null) {
+            try {
+                result = BeanUtils.getValue(entity, property);
+            } catch (OgnlException e) {
+                result = null;
+            }
+        }
+        result = StringUtils.defaultIfEmpty(result);
+        result = BeanUtils.convertValue(result, type);
+        return (T) result;
     }
 
 }
