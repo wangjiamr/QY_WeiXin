@@ -24,16 +24,26 @@ define(function(require, exports, module) {
                     $(reqList).each(function(i, o) {
                         var listTemp;
                         if (o['tip'] == 1) {
-                            listTemp = $templete.getReqListTemp(true, true);
+                            listTemp = $templete.getReqListTemp(false, true);
                         } else if (o['tip'] == 0) {
                             listTemp = $templete.getReqListTemp(false, false);
+                        }
+                        var resultClass='',resultText='';
+                        if(o['result']==1){
+                            resultClass='cross';
+                            resultText='已通过';
+                        }else if(o['result']==2){
+                            resultClass='nocross';
+                            resultText='已否决';
                         }
                         dataStr.append(String.formatmodel(listTemp, {
                             'id' : o['id'],
                             'applyName' : o['applyName'],
                             'applyDate' : o['sendDate'],
                             'reqNo' : o['reqNo'],
-                            'icon':o['icon']
+                            'icon':o['icon'],
+                            'resultClass':resultClass,
+                            'resultText':resultText
                         }));
                     });
                     if ($('li', '#reqListUL').size() == 0) {

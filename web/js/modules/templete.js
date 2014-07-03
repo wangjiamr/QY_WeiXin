@@ -16,7 +16,7 @@ define(function(require, exports, module) {
 	};
 	exports.getReqListTemp = function(removeFlag, tip) {
 		var reqListTemp = new StringBuilder();
-		reqListTemp.append('<li class="clearfix" uid="{id}">\n');
+		reqListTemp.append('<li class="clearfix {resultClass}" uid="{id}" >\n');
 		if (tip) {
 			reqListTemp.append('<span class="BtnIcon arrow1"></span>\n');
 		} else {
@@ -31,7 +31,8 @@ define(function(require, exports, module) {
 		reqListTemp.append('<span class="floatright">{applyDate}</span>\n');
 		reqListTemp.append('</p>\n');
 		reqListTemp.append('<p>\n');
-		reqListTemp.append('{reqNo}\n');
+		reqListTemp.append('<span>{reqNo}</span>\n');
+        reqListTemp.append('<span class="floatright">{resultText}</span>\n');
 		reqListTemp.append('</p>\n');
 		if (removeFlag) {
 			reqListTemp.append('<span class="Revoke">撤销</span>\n');
@@ -41,34 +42,36 @@ define(function(require, exports, module) {
 	};
 	exports.getTaskListTemp = function() {
 		var taskListTemp = new StringBuilder();
-		taskListTemp.append('<li class="clearfix" uid="{id}">\n');
+		taskListTemp.append('<li class="clearfix {resultClass}" uid="{id}" reqId="{reqId}">\n');
 		taskListTemp.append('<span class="BtnIcon floatleft"></span>\n');
 		taskListTemp.append('<span class="AppImg floatleft">\n');
-		taskListTemp.append('<img src="../../img/ico-06.png">\n');
+		taskListTemp.append('<img src="../../img/{icon}">\n');
 		taskListTemp.append('</span>\n');
 		taskListTemp.append('<p>\n');
 		taskListTemp.append('<span class="AppName font14">{applyName}</span>\n');
 		taskListTemp.append('<span class="floatright">{applyDate}</span>\n');
 		taskListTemp.append('</p>\n');
 		taskListTemp.append('<p>\n');
-		taskListTemp.append('{reqNo}\n');
+        taskListTemp.append('<span>{reqNo}</span>\n');
+        taskListTemp.append('<span class="floatright">{resultText}</span>\n');
 		taskListTemp.append('</p>\n');
 		taskListTemp.append('</li>\n');
 		return taskListTemp.toString();
 	};
 	exports.getManageListTemp = function() {
 		var manageListTemp = new StringBuilder();
-		manageListTemp.append('<li class="clearfix" uid="{id}">\n');
+		manageListTemp.append('<li class="clearfix {resultClass}" uid="{id}" reqId="{reqId}">\n');
 		manageListTemp.append('<span class="BtnIcon floatleft"></span>\n');
 		manageListTemp.append('<span class="AppImg floatleft">\n');
-		manageListTemp.append('<img src="../../img/ico-06.png">\n');
+		manageListTemp.append('<img src="../../img/{icon}">\n');
 		manageListTemp.append('</span>\n');
 		manageListTemp.append('<p>\n');
 		manageListTemp.append('<span class="AppName font14">{applyName}</span>\n');
 		manageListTemp.append('<span class="floatright">{applyDate}</span>\n');
 		manageListTemp.append('</p>\n');
 		manageListTemp.append('<p>\n');
-		manageListTemp.append('{reqNo}\n');
+        manageListTemp.append('<span>{reqNo}</span>\n');
+        manageListTemp.append('<span class="floatright">{resultText}</span>\n');
 		manageListTemp.append('</p>\n');
 		manageListTemp.append('</li>\n');
 		return manageListTemp.toString();

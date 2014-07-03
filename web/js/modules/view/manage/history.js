@@ -7,7 +7,7 @@ define(function(require, exports, module) {
     var $userInfo = require('core/userInfo');
     var $laIscroll = require('core/la_iscroll');
     loadIngData = function() {
-        $list.url($laCommon.getRestApiURL() + "/wf/req/confirmList");
+        $list.url($laCommon.getRestApiURL() + "/wf/manage/historyList");
         $list.params({
             'laToken' : laTokenFinal
         });
@@ -22,16 +22,12 @@ define(function(require, exports, module) {
                 } else {
                     var dataStr = new StringBuilder();
                     $(reqList).each(function(i, o) {
-                        var listTemp;
-                        if (o['tip'] == 1) {
-                            listTemp = $templete.getReqListTemp(false, true);
-                        } else if (o['tip'] == 0) {
-                            listTemp = $templete.getReqListTemp(false, false);
-                        }
+                        var listTemp=$templete.getManageListTemp(false, false);
                         dataStr.append(String.formatmodel(listTemp, {
                             'id' : o['id'],
+                            'reqId' : o['reqId'],
                             'applyName' : o['applyName'],
-                            'applyDate' : o['sendDate'],
+                            'applyDate' : o['receiveDate'],
                             'reqNo' : o['reqNo'],
                             'icon':o['icon'],
                             'resultClass':'',
@@ -93,9 +89,10 @@ define(function(require, exports, module) {
 
                 window.setTimeout(function() {
                     $(element).removeClass('current');
+                    var reqId=$(element).attr('reqId');
                     var uid=$(element).attr('uid');
-                    if(uid){
-                        document.location.href='http://qywx.mingdao.com/wf/req/view?laToken='+laTokenFinal+'&id='+uid;
+                    if(uid&&reqId){
+                        document.location.href='http://qywx.mingdao.com/wf/req/view?laToken='+laTokenFinal+'&id='+reqId;
                     }
                 }, 150);
 

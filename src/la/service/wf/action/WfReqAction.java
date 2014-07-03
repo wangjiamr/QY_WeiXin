@@ -68,7 +68,7 @@ public class WfReqAction extends ActionSupport {
 
                 TextRspMessage textRspMessage = MessageUtils.buildRspMessage(requestMap, TextRspMessage.class);
                 if (page != null) {
-                    String str = buildMessageContent(page, title, eventKey, true, laToken);
+                    String str = buildMessageContent(page, title, eventKey, "REQ", laToken);
                     textRspMessage.setContent(str);
                 } else {
                     textRspMessage.setContent(defaultMsg);
@@ -81,21 +81,21 @@ public class WfReqAction extends ActionSupport {
     }
 
     @PageFlow(result = {
-            @Result(name = "success", path = "/view/req/ingList.ftl", type = Dispatcher.FreeMarker)
+            @Result(name = "success", path = "/view/wf/req/ingList.ftl", type = Dispatcher.FreeMarker)
     })
     public String ing() throws Exception {
         return "success";
     }
 
     @PageFlow(result = {
-            @Result(name = "success", path = "/view/req/historyList.ftl", type = Dispatcher.FreeMarker)
+            @Result(name = "success", path = "/view/wf/req/historyList.ftl", type = Dispatcher.FreeMarker)
     })
     public String history() throws Exception {
         return "success";
     }
 
     @PageFlow(result = {
-            @Result(name = "success", path = "/view/req/confirmList.ftl", type = Dispatcher.FreeMarker)
+            @Result(name = "success", path = "/view/wf/req/confirmList.ftl", type = Dispatcher.FreeMarker)
     })
     public String confirm() throws Exception {
         return "success";
@@ -232,7 +232,7 @@ public class WfReqAction extends ActionSupport {
     }
 
     @PageFlow(result = {
-            @Result(name = "success", path = "/view/req/view.ftl", type = Dispatcher.FreeMarker)
+            @Result(name = "success", path = "/view/wf/req/view.ftl", type = Dispatcher.FreeMarker)
     })
     public String view() throws Exception {
         if (StringUtils.isNotBlank(laToken) && id != null) {

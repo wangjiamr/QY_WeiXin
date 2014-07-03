@@ -7,7 +7,7 @@ define(function(require, exports, module) {
     var $userInfo = require('core/userInfo');
     var $laIscroll = require('core/la_iscroll');
     loadIngData = function() {
-        $list.url($laCommon.getRestApiURL() + "/wf/req/confirmList");
+        $list.url($laCommon.getRestApiURL() + "/wf/task/ingList");
         $list.params({
             'laToken' : laTokenFinal
         });
@@ -23,15 +23,16 @@ define(function(require, exports, module) {
                     var dataStr = new StringBuilder();
                     $(reqList).each(function(i, o) {
                         var listTemp;
-                        if (o['tip'] == 1) {
-                            listTemp = $templete.getReqListTemp(false, true);
-                        } else if (o['tip'] == 0) {
-                            listTemp = $templete.getReqListTemp(false, false);
+                        if (o['tip'] == 0) {
+                            listTemp = $templete.getTaskListTemp(false, true);
+                        } else if (o['tip'] == 1) {
+                            listTemp = $templete.getTaskListTemp(false, false);
                         }
                         dataStr.append(String.formatmodel(listTemp, {
                             'id' : o['id'],
+                            'reqId' : o['reqId'],
                             'applyName' : o['applyName'],
-                            'applyDate' : o['sendDate'],
+                            'applyDate' : o['receiveDate'],
                             'reqNo' : o['reqNo'],
                             'icon':o['icon'],
                             'resultClass':'',
@@ -64,7 +65,6 @@ define(function(require, exports, module) {
                     }
                 }
             } else {
-                alert('a')
                 $laIscroll.refresh();
                 $more.init($('#moreAction'), jsonData['page']);
             }
@@ -94,8 +94,9 @@ define(function(require, exports, module) {
                 window.setTimeout(function() {
                     $(element).removeClass('current');
                     var uid=$(element).attr('uid');
-                    if(uid){
-                        document.location.href='http://qywx.mingdao.com/wf/req/view?laToken='+laTokenFinal+'&id='+uid;
+                    var reqId=$(element).attr('reqId');
+                    if(uid&&reqId){
+                        document.location.href='http://qywx.mingdao.com/wf/task/view?laToken='+laTokenFinal+'&id='+uid+'&reqId='+reqId;
                     }
                 }, 150);
 

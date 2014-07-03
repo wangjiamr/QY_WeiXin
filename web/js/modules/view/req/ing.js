@@ -22,18 +22,15 @@ define(function(require, exports, module) {
                 } else {
                     var dataStr = new StringBuilder();
                     $(reqList).each(function(i, o) {
-                        var listTemp;
-                        if (o['tip'] == 1) {
-                            listTemp = $templete.getReqListTemp(true, true);
-                        } else if (o['tip'] == 0) {
-                            listTemp = $templete.getReqListTemp(false, false);
-                        }
+                        var listTemp=$templete.getReqListTemp(false, false);
                         dataStr.append(String.formatmodel(listTemp, {
                             'id' : o['id'],
                             'applyName' : o['applyName'],
                             'applyDate' : o['sendDate'],
                             'reqNo' : o['reqNo'],
-                            'icon':o['icon']
+                            'icon':o['icon'],
+                            'resultClass':'',
+                            'resultText':'&nbsp;'
                         }));
                     });
                     if ($('li', '#reqListUL').size() == 0) {
