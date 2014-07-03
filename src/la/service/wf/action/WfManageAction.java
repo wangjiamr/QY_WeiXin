@@ -7,13 +7,10 @@ import la.service.common.entity.TextRspMessage;
 import la.service.util.MessageUtils;
 import la.service.util.WxParamsUtils;
 import la.service.web.support.ActionSupport;
-import org.guiceside.commons.lang.DateFormatUtil;
 import org.guiceside.commons.lang.StringUtils;
 import org.guiceside.web.annotation.Action;
 import org.guiceside.web.annotation.ReqGet;
 
-import java.util.Date;
-import java.util.List;
 import java.util.Map;
 
 /**

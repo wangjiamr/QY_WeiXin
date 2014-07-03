@@ -23,7 +23,7 @@ public abstract class ActionSupport extends BaseAction {
             String detailURL = null;
             String moreUrl = null;
             if (type.contains("REQ")) {
-                detailURL = "http://qywx.mingdao.com/wf/req/ing?laToken=" + laToken + "&id=";
+                detailURL = "http://qywx.mingdao.com/wf/req/view?laToken=" + laToken + "&id=";
             } else if (type.contains("TASK")) {
                 detailURL = "http://qywx.mingdao.com/wf/task/view?laToken=" + laToken + "&id=";
             } else if (type.contains("MANAGE")) {
@@ -46,7 +46,7 @@ public abstract class ActionSupport extends BaseAction {
             }
             List<Req> reqList = page.getResultList();
             if (reqList != null && !reqList.isEmpty()) {
-                StringBuilder buffer = new StringBuilder("您当前有10条" + title + "\n\n");
+                StringBuilder buffer = new StringBuilder("您当前有"+page.getTotalRecord()+"条" + title + "\n\n");
                 for (int x = 0; x < reqList.size(); x++) {
                     Req req = reqList.get(x);
                     String dateStr = isSendDate ? req.getSendDate() : req.getReceiveDate();
@@ -91,6 +91,44 @@ public abstract class ActionSupport extends BaseAction {
             blank.append(paddingStr);
         }
         return blank.toString();
+    }
+
+    protected String get(Object entity, String property) {
+        Object result = null;
+        if (entity != null) {
+            try {
+                result = BeanUtils.getValue(entity, property);
+            } catch (OgnlException e) {
+                result = null;
+            }
+        }
+        return StringUtils.defaultIfEmpty(result);
+    }
+
+    protected String getDate(Object entity, String property, String f) {
+        Object result = null;
+        if (entity != null) {
+            try {
+                result = BeanUtils.getValue(entity, property);
+            } catch (OgnlException e) {
+                result = null;
+            }
+        }
+        return StringUtils.defaultIfEmptyByDate((Date) result, f);
+    }
+
+    protected <T> T get(Object entity, String property, Class<T> type) {
+        Object result = null;
+        if (entity != null) {
+            try {
+                result = BeanUtils.getValue(entity, property);
+            } catch (OgnlException e) {
+                result = null;
+            }
+        }
+        result = StringUtils.defaultIfEmpty(result);
+        result = BeanUtils.convertValue(result, type);
+        return (T) result;
     }
 
 }
