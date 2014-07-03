@@ -79,13 +79,6 @@
                                         </#if>
                                     </#list>
                                 </#if>
-                            <#elseif rowContent.type=="text">
-                                <table>
-                                    <tr>
-                                        <th>${rowContent.label?if_exists} :</th>
-                                        <td><pre>${rowContent.value?if_exists}</pre></td>
-                                    </tr>
-                                </table>
                             <#else >
                                 <table>
                                     <tr>
